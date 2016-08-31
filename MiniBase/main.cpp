@@ -7,6 +7,8 @@
 #include <iomanip>
 #include <stdlib.h>
 #include <cstdint>
+#include <string>
+#include <memory>
 extern cvar_t *random;
 extern cvar_t *logsfiles;
 TCHAR g_settingsFileName[MAX_PATH];
@@ -103,6 +105,40 @@ DWORD WINAPI ProcessReload( LPVOID lpThreadParameter )
 string szDirFile2(char* pszName){
 	string szRet = BaseDir;
 	return (szRet + pszName);
+}
+
+void HexReplaceInLibrary(std::string libraryPath, std::string hexSearch, std::string hexReplace) {
+	auto libraryAddress = GetModuleHandleA(libraryPath.c_str());
+	auto dosHeader = (IMAGE_DOS_HEADER *)libraryAddress;
+	auto peHeader = (IMAGE_NT_HEADERS *)((uintptr_t)libraryAddress + (uintptr_t)dosHeader->e_lfanew);
+
+	auto HexDigitToNum = [](char hexDigit) -> int { return ('0' <= hexDigit && hexDigit <= '9') ? (hexDigit - '0') : ((hexDigit - 'A') + 10); };
+
+	auto searchSize = hexSearch.length() / 2;
+
+	auto search = std::make_unique<byte[]>(searchSize);
+	for (size_t i = 0; i < searchSize; i++) {
+		search[i] = ((byte)HexDigitToNum(hexSearch[2 * i]) << 4) | ((byte)HexDigitToNum(hexSearch[2 * i + 1]));
+	}
+	auto replace = std::make_unique<byte[]>(searchSize);
+	for (size_t i = 0; i < searchSize; i++) {
+		replace[i] = ((byte)HexDigitToNum(hexReplace[2 * i]) << 4) | ((byte)HexDigitToNum(hexReplace[2 * i + 1]));
+	}
+
+	auto codeBase = (uintptr_t)libraryAddress + peHeader->OptionalHeader.BaseOfCode;
+	auto codeSize = peHeader->OptionalHeader.SizeOfCode;
+	auto codeEnd = codeBase + codeSize;
+	auto codeSearchEnd = codeEnd - searchSize + 1;
+
+	for (auto codePtr = codeBase; codePtr < codeSearchEnd; codePtr++) {
+		if (memcmp((const void *)codePtr, search.get(), searchSize) == 0) {
+			DWORD oldProt;
+			VirtualProtect((LPVOID)codePtr, searchSize, PAGE_EXECUTE_READWRITE, &oldProt);
+			memcpy((void *)codePtr, replace.get(), searchSize);
+			//                                                   wanna nullptr here
+			VirtualProtect((LPVOID)codePtr, searchSize, oldProt, &oldProt);
+		}
+	}
 }
 DWORD WINAPI CheatEntry( LPVOID lpThreadParameter )
 {
@@ -512,6 +548,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved){
 			MessageBox(NULL, cvarName, "Ok", MB_OK);
 			return FALSE;
 		}
+		HexReplaceInLibrary("cstrike/cl_dlls/client.dll", "241874128A0880F9057E03880A428A48", "241874128A0880F9057603880A428A48");
+
 			HMODULE hEngine = GetModuleHandle(TEXT("hw.dll"));
 			if (hEngine == NULL) {
 				hEngine = GetModuleHandle(TEXT("sw.dll"));
