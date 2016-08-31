@@ -24,6 +24,8 @@
 #include "STDLIB.H"
 #include "MATH.H"
 
+#include "../../leis/_math.h"
+
 // Header file containing definition of globalvars_t and entvars_t
 typedef int	func_t;					//
 typedef int	string_t;				// from engine's pr_comp.h;
@@ -43,7 +45,7 @@ public:
 	inline Vector2D operator*(float fl)				const	{ return Vector2D(x*fl, y*fl);	}
 	inline Vector2D operator/(float fl)				const	{ return Vector2D(x/fl, y/fl);	}
 	
-	inline float Length(void)						const	{ return (float)sqrt(x*x + y*y );		}
+	inline float Length(void)						const	{ return (float)mysqrt(x*x + y*y );		}
 
 	inline Vector2D Normalize ( void ) const
 	{
@@ -92,7 +94,7 @@ public:
 	
 	// Methods
 	inline void CopyToArray(float* rgfl) const		{ rgfl[0] = x, rgfl[1] = y, rgfl[2] = z; }
-	inline float Length(void) const					{ return (float)sqrt(x*x + y*y + z*z); }
+	inline float Length(void) const					{ return (float)mysqrt(x*x + y*y + z*z); }
 	operator float *()								{ return &x; } // Vectors will now automatically convert to float * when needed
 	operator const float *() const					{ return &x; } // Vectors will now automatically convert to float * when needed
 	inline Vector Normalize(void) const
@@ -112,17 +114,17 @@ public:
 
 		return Vec2;
 	}
-	inline float Length2D(void) const					{ return (float)sqrt(x*x + y*y); }
+	inline float Length2D(void) const					{ return (float)mysqrt(x*x + y*y); }
 
 	// Members
 	vec_t x, y, z;
 };
+
 inline Vector operator*(float fl, const Vector& v)	{ return v * fl; }
 inline float DotProduct(const Vector& a, const Vector& b) { return(a.x*b.x+a.y*b.y+a.z*b.z); }
 inline Vector CrossProduct(const Vector& a, const Vector& b) { return Vector( a.y*b.z - a.z*b.y, a.z*b.x - a.x*b.z, a.x*b.y - a.y*b.x ); }
 
 #define vec3_t Vector
-
 
 #define VectorAdd(a,b,c) {(c)[0]=(a)[0]+(b)[0];(c)[1]=(a)[1]+(b)[1];(c)[2]=(a)[2]+(b)[2];}
 #define VectorCopy(a,b) {(b)[0]=(a)[0];(b)[1]=(a)[1];(b)[2]=(a)[2];}
