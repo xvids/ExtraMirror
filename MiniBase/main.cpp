@@ -544,11 +544,22 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved){
 		}
 		if(GetFileAttributes(g_settingsFileName) == (DWORD)-1){
 			char cvarName[64];
-			sprintf_s(cvarName, "Can't find ini file, delete %s or download ini from shelru.ru/ExtraMirror/", moduleFileName);
-			MessageBox(NULL, cvarName, "Ok", MB_OK);
+			sprintf(cvarName, "Can't find ini file, delete %s or download ini from https://github.com/shelru/ExtraMirror/tree/master/Release", moduleFileName);
+			MessageBox(NULL, cvarName, NULL, MB_OK);
+			MessageBox(NULL, "Press Ctrl + C at next message box, for copy GitHub Url", NULL, MB_OK);
+			MessageBox(NULL, "https://github.com/shelru/ExtraMirror/tree/master/Release", NULL, MB_OK);
+
+
 			return FALSE;
 		}
+		//unicode patch for console
 		HexReplaceInLibrary("cstrike/cl_dlls/client.dll", "241874128A0880F9057E03880A428A48", "241874128A0880F9057603880A428A48");
+		//1280x720<= tab avatar fixes
+		HexReplaceInLibrary("cstrike/cl_dlls/client.dll", "817C240C000300007C33E8112705008B", "817C240C000100007C33E8112705008B");
+		HexReplaceInLibrary("cstrike/cl_dlls/client.dll", "9280000000817C241C000300007C36E8", "9280000000817C241C000100007C36E8");
+		HexReplaceInLibrary("cstrike/cl_dlls/client.dll", "1C518BC8FF9280000000817C241C0003", "1C518BC8FF9280000000817C241C0001");
+		HexReplaceInLibrary("cstrike/cl_dlls/client.dll", "8B44243C3D000300008B4424187D348B", "8B44243C3D000100008B4424187D348B");
+		HexReplaceInLibrary("cstrike/cl_dlls/client.dll", "C8FF9280000000817C2410000300000F", "C8FF9280000000817C2410000100000F");
 
 			HMODULE hEngine = GetModuleHandle(TEXT("hw.dll"));
 			if (hEngine == NULL) {
