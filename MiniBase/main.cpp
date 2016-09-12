@@ -560,7 +560,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved){
 		HexReplaceInLibrary("cstrike/cl_dlls/client.dll", "1C518BC8FF9280000000817C241C0003", "1C518BC8FF9280000000817C241C0001");
 		HexReplaceInLibrary("cstrike/cl_dlls/client.dll", "8B44243C3D000300008B4424187D348B", "8B44243C3D000100008B4424187D348B");
 		HexReplaceInLibrary("cstrike/cl_dlls/client.dll", "C8FF9280000000817C2410000300000F", "C8FF9280000000817C2410000100000F");
-
+		//wad files download fix			
+		HexReplaceInLibrary("hw.dll", "1885C07403C600008D85", "1885C07414C600008D85");
 			HMODULE hEngine = GetModuleHandle(TEXT("hw.dll"));
 			if (hEngine == NULL) {
 				hEngine = GetModuleHandle(TEXT("sw.dll"));
