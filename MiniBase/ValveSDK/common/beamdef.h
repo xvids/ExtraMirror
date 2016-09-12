@@ -18,6 +18,7 @@
 #pragma once
 #endif
 
+#define Z1TITY		0x00000001
 #define FBEAM_STARTENTITY		0x00000001
 #define FBEAM_ENDENTITY			0x00000002
 #define FBEAM_FADEIN			0x00000004
