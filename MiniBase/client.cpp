@@ -149,8 +149,9 @@ void InitHack(){
 		g_blockedCvars[g_blockedCvarCount++] = strdup(psKeyName2);
 		psKeyName2 += strlen(psKeyName2) + 1;
 	}
+
 	if (!(g_Engine.Con_IsVisible() != 0))g_Engine.pfnClientCmd("toggleconsole");
-	ConsolePrintColor(0, 255, 11, "-- Extra Mirror v1.8\n");
+	ConsolePrintColor(0, 255, 11, "-- Extra Mirror v1.8e\n");
 	ConsolePrintColor(255, 255, 255, "-- Use 'credits' for more information\n");
 	ConsolePrintColor(255, 255, 255, "-- Thank's to Realwar for title\n");
 	ConsolePrintColor(255, 255, 255, "-- Thank's to FightMagister for functions\n");
@@ -173,7 +174,6 @@ void InitHack(){
 
 void HookEventMessages(){
 	pEventMsgBase = (PEventMsg)offset.FindEventMsgBase();
-	pEvent_usp = HookEventMsg("events/usp.sc", Event_usp);
 	pEvent_ak47 = HookEventMsg("events/ak47.sc", Event_ak47);
 	pEvent_aug = HookEventMsg("events/aug.sc", Event_aug);
 	pEvent_awp = HookEventMsg("events/awp.sc", Event_awp);
@@ -209,7 +209,8 @@ void HookEventMessages(){
 void HUD_Frame(double time){
 	if (!FirstFrame){
 		g_Screen.iSize = sizeof(SCREENINFO);offset.HLType = g_Studio.IsHardware() + 1;offset.ConsoleColorInitalize();
-		offset.GetGameInfo(&BuildInfo);HookUserMessages(); HookEventMessages(); HookEngineMessages();InitHack();FirstFrame = true;
+		offset.GetGameInfo(&BuildInfo);HookUserMessages();  HookEngineMessages();InitHack();FirstFrame = true;
+		HookEventMessages();
 	}
 	g_Engine.pfnGetScreenInfo(&g_Screen);
 	g_Client.HUD_Frame(time);

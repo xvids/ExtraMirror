@@ -55,7 +55,6 @@ bool cOffset::GetModuleInfo()
 void cOffset::Error(char* Msg)
 {
 	MessageBoxA(0, Msg, OFF_ERROR, MB_OK | MB_ICONERROR);
-	ExitProcess(0);
 }
 
 DWORD cOffset::FindClientTable()
@@ -239,11 +238,16 @@ DWORD cOffset::FindSVCMessages()
 
 	return (DWORD)pEngineMsgBase;
 }
+#define equali !stricmp
 DWORD cOffset::FindEventMsgBase()
 {
 	DWORD PatternAddress = FindPattern(OFF_EVENT_MSG_BASE, HwBase, HwEnd, 0);
-	DWORD ReferenAddress = FindReference(HwBase, HwEnd, PatternAddress) - 0x07;
-
+	DWORD ReferenAddress;
+	if (equali(BuildInfo.GameVersion,"4554")){
+		ReferenAddress = FindReference(HwBase, HwEnd, PatternAddress) - 0x06;
+	}
+	else { ReferenAddress = FindReference(HwBase, HwEnd, PatternAddress) - 0x07; }
+	 
 	if (FarProc(ReferenAddress, HwBase, HwEnd))
 	{
 		Error(OFF_EVENT_MSG_ERROR);
