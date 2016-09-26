@@ -151,7 +151,7 @@ void InitHack(){
 	}
 
 	if (!(g_Engine.Con_IsVisible() != 0))g_Engine.pfnClientCmd("toggleconsole");
-	ConsolePrintColor(0, 255, 11, "-- Extra Mirror v1.8e\n");
+	ConsolePrintColor(0, 255, 11, "-- Extra Mirror v1.8x\n");
 	ConsolePrintColor(255, 255, 255, "-- Use 'credits' for more information\n");
 	ConsolePrintColor(255, 255, 255, "-- Thank's to Realwar for title\n");
 	ConsolePrintColor(255, 255, 255, "-- Thank's to FightMagister for functions\n");
@@ -174,6 +174,7 @@ void InitHack(){
 
 void HookEventMessages(){
 	pEventMsgBase = (PEventMsg)offset.FindEventMsgBase();
+	pEvent_usp = HookEventMsg("events/usp.sc", Event_usp);
 	pEvent_ak47 = HookEventMsg("events/ak47.sc", Event_ak47);
 	pEvent_aug = HookEventMsg("events/aug.sc", Event_aug);
 	pEvent_awp = HookEventMsg("events/awp.sc", Event_awp);
