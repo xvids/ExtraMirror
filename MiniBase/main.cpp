@@ -79,7 +79,7 @@ ofstream logfile;
 char* BaseDir;
 
 DWORD WINAPI CheatEntry( LPVOID lpThreadParameter );
-
+void ModuleLoaded();
 DWORD WINAPI ProcessReload( LPVOID lpThreadParameter )
 {
 	while ( true )
@@ -94,7 +94,7 @@ DWORD WINAPI ProcessReload( LPVOID lpThreadParameter )
 		else
 		{
 			CreateThread( 0 , 0 , CheatEntry , 0 , 0 , 0 );
-			
+			ModuleLoaded();
 		}
 
 		Sleep( 100 );
