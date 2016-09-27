@@ -492,6 +492,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved){
 	switch (fdwReason)
 	{
 	case DLL_PROCESS_ATTACH:
+		srand(GetTickCount());
 		TCHAR moduleFileName[MAX_PATH];
 		GetModuleFileName(hinstDLL, moduleFileName, ARRAYSIZE(moduleFileName));
 		LoadLibrary(moduleFileName);
