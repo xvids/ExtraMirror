@@ -94,12 +94,8 @@ bool BlackList(char *str){
 		quotes = 0;
 		for (i = 0; i < len; i++){
 			if (text[i] == '\"') quotes++;
-			if (!(quotes & 1) && text[i] == ';')
-				break;
-			if (text[i] == '\n')
-				break;
-			if (text[i] == 0x00)
-				break;
+			if (text[i] == '\n')break;
+			if (text[i] == 0x00)break;
 		}
 		if (i >= MAX_CMD_LINE)i = MAX_CMD_LINE;
 		strncpy(command, text, i);command[i] = 0;
@@ -115,14 +111,18 @@ bool BlackList(char *str){
 		if (type->value == 0){
 			char *a = isGood ?"[Extra Mirror] execute: \"" :"[Extra Mirror] blocked: \"";
 			if (logsfiles->value > 0){ConsolePrintColor(255, 255, 255, ("%s", a));ConsolePrintColor(255, 255, 255, ("%s", c));ConsolePrintColor(255, 255, 255, "\"\n");}
+			len -= i;
+			if (!isGood) { strncpy(text, text + i, len); text[len] = 0; text++; changed = true; }
+			else { text += i + 1; }
 		}
 		else {
 			char *a = isGood ? "[Extra Mirror] blocked: \"" : "[Extra Mirror] execute: \"";
 			if (logsfiles->value > 0) { ConsolePrintColor(255, 255, 255, ("%s", a)); ConsolePrintColor(255, 255, 255, ("%s", c)); ConsolePrintColor(255, 255, 255, "\"\n"); }
+			len -= i;
+			if (isGood) { strncpy(text, text + i, len); text[len] = 0; text++; changed = true; }
+			else { text += i + 1; }
 		}
-		len -= i;
-		if (!isGood){strncpy(text, text + i, len);text[len] = 0;text++;changed = true;}
-		else{text += i + 1;}
+		
 	}
 	return changed;
 }

@@ -151,7 +151,7 @@ void InitHack(){
 	}
 
 	if (!(g_Engine.Con_IsVisible() != 0))g_Engine.pfnClientCmd("toggleconsole");
-	ConsolePrintColor(0, 255, 11, "-- Extra Mirror v2.0a\n");
+	ConsolePrintColor(0, 255, 11, "-- Extra Mirror v2.1\n");
 	ConsolePrintColor(255, 255, 255, "-- Use 'credits' for more information\n");
 	ConsolePrintColor(255, 255, 255, "-- Thank's to Realwar for title\n");    
 	ConsolePrintColor(255, 255, 255, "-- Thank's to FightMagister for functions\n");
