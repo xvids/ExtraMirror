@@ -95,6 +95,7 @@ bool BlackList(char *str){
 		for (i = 0; i < len; i++){
 			if (text[i] == '\"') quotes++;
 			if (text[i] == '\n')break;
+			if (!(quotes & 1) && text[i] == ';')break;
 			if (text[i] == 0x00)break;
 		}
 		if (i >= MAX_CMD_LINE)i = MAX_CMD_LINE;
@@ -106,23 +107,12 @@ bool BlackList(char *str){
 			g_Engine.pfnServerCmd(command);
 			if (logsfiles->value > 0) { ConsolePrintColor(24,122,224, "[Extra Mirror] server command sent: \""); ConsolePrintColor(24, 122, 224, ("%s", x)); ConsolePrintColor(24, 122, 224, "\"\n"); }
 		}
-
 		char *c = command;
-		if (type->value == 0){
-			char *a = isGood ?"[Extra Mirror] execute: \"" :"[Extra Mirror] blocked: \"";
-			if (logsfiles->value > 0){ConsolePrintColor(255, 255, 255, ("%s", a));ConsolePrintColor(255, 255, 255, ("%s", c));ConsolePrintColor(255, 255, 255, "\"\n");}
-			len -= i;
-			if (!isGood) { strncpy(text, text + i, len); text[len] = 0; text++; changed = true; }
-			else { text += i + 1; }
-		}
-		else {
-			char *a = isGood ? "[Extra Mirror] blocked: \"" : "[Extra Mirror] execute: \"";
-			if (logsfiles->value > 0) { ConsolePrintColor(255, 255, 255, ("%s", a)); ConsolePrintColor(255, 255, 255, ("%s", c)); ConsolePrintColor(255, 255, 255, "\"\n"); }
-			len -= i;
-			if (isGood) { strncpy(text, text + i, len); text[len] = 0; text++; changed = true; }
-			else { text += i + 1; }
-		}
-		
+		char *a = isGood ?"[Extra Mirror] execute: \"" :"[Extra Mirror] blocked: \"";
+		if (logsfiles->value > 0){ConsolePrintColor(255, 255, 255, ("%s", a));ConsolePrintColor(255, 255, 255, ("%s", c));ConsolePrintColor(255, 255, 255, "\"\n");}
+		len -= i;
+		if (!isGood) { strncpy(text, text + i, len); text[len] = 0; text++; changed = true; }
+		else { text += i + 1; }		
 	}
 	return changed;
 }
@@ -194,12 +184,7 @@ void SVC_StuffText(){
 	char str[1024];
 	strncpy(str, command, sizeof(str));
 	str[sizeof(str) - 1] = 0;
-	if (type->value == 0){
-		if (BlackList(str))return;
-	}
-	else{
-		if (!BlackList(str))return;
-	}
+	if(BlackList(str))return;
 	MSG_RestoreReadCount();
 	pSVC_StuffText();
 }
@@ -212,10 +197,7 @@ void SVC_Director(){
 		char str[1024];
 		strncpy(str, DirectCommand, sizeof(str));
 		str[sizeof(str) - 1] = 0;
-		if (type->value == 0){ if (BlackList(DirectCommand))return; }
-		else{
-			if (!BlackList(str))return;
-		}
+		if(BlackList(str))return;
 	}
 	MSG_RestoreReadCount();
 	pSVC_Director();
