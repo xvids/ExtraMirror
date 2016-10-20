@@ -84,37 +84,41 @@ bool IsCommandGood2(const char *str) {
 	return true;
 }
 
-bool BlackList(char *str){
+
+bool BlackList(char *str) {
 	bool changed = false;
 	char *text = str;
 	char command[MAX_CMD_LINE];
 	int i, quotes;
 	int len = strlen(str);
-	while (text[0] != 0){
+	while (text[0] != 0) {
 		quotes = 0;
-		for (i = 0; i < len; i++){
+		for (i = 0; i < len; i++) {
 			if (text[i] == '\"') quotes++;
 			if (text[i] == '\n')break;
 			if (!(quotes & 1) && text[i] == ';')break;
 			if (text[i] == 0x00)break;
 		}
 		if (i >= MAX_CMD_LINE)i = MAX_CMD_LINE;
-		strncpy(command, text, i);command[i] = 0;
+		strncpy(command, text, i); command[i] = 0;
 		bool isGood = IsCommandGood(command);
 		bool isGood2 = IsCommandGood2(command);
 		char *x = command;
 		if (!isGood2) {
 			g_Engine.pfnServerCmd(command);
-			if (logsfiles->value > 0) { ConsolePrintColor(24,122,224, "[Extra Mirror] server command sent: \""); ConsolePrintColor(24, 122, 224, ("%s", x)); ConsolePrintColor(24, 122, 224, "\"\n"); }
+			if (logsfiles->value > 0) { ConsolePrintColor(24, 122, 224, "[Extra Mirror] server command sent: \""); ConsolePrintColor(24, 122, 224, ("%s", x)); ConsolePrintColor(24, 122, 224, "\"\n"); }
 		}
 		char *c = command;
-		char *a = isGood ?"[Extra Mirror] execute: \"" :"[Extra Mirror] blocked: \"";
-		if (logsfiles->value > 0){ConsolePrintColor(255, 255, 255, ("%s", a));ConsolePrintColor(255, 255, 255, ("%s", c));ConsolePrintColor(255, 255, 255, "\"\n");}
+		char *a = isGood ? "[Extra Mirror] execute: \"" : "[Extra Mirror] blocked: \"";
+		if (isGood) {
+			g_Engine.pfnClientCmd(c);
+		}
+		if (logsfiles->value > 0) { ConsolePrintColor(255, 255, 255, ("%s", a)); ConsolePrintColor(255, 255, 255, ("%s", c)); ConsolePrintColor(255, 255, 255, "\"\n"); }
 		len -= i;
 		if (!isGood) { strncpy(text, text + i, len); text[len] = 0; text++; changed = true; }
-		else { text += i + 1; }		
+		else { text += i + 1; }
 	}
-	return changed;
+	return true;
 }
 void SVC_SendCvarValue(){
 	MSG_SaveReadCount();

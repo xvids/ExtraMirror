@@ -47,7 +47,7 @@ void models(){
 }
 void Credits(){
 	ConsolePrintColor(255, 255, 255, "-- Thank's to");ConsolePrintColor(0, 255, 0, " [2010] Team\n");ConsolePrintColor(255, 255, 255, "-- Thank's to");
-	ConsolePrintColor(0, 255, 0, " madotsuki-team < *\n");ConsolePrintColor(255, 255, 255, "-- Thank's to ");ConsolePrintColor(0, 255, 0, "or_75\n");
+	ConsolePrintColor(0, 255, 0, " madotsuki-team < *\n");ConsolePrintColor(255, 255, 255, "-- Thank's to ");ConsolePrintColor(0, 255, 0, "or_75\n"); ConsolePrintColor(255, 255, 255, "-- Thank's to"); ConsolePrintColor(0, 255, 0, "Juice\n");
 }
 int g_blockedCmdCount, g_serverCmdCount,g_anticheckfiles;
 char *g_blockedCmds[1024], *g_serverCmds[2048], *g_anticheckfiles2[2048];
@@ -151,7 +151,7 @@ void InitHack(){
 	}
 
 	if (!(g_Engine.Con_IsVisible() != 0))g_Engine.pfnClientCmd("toggleconsole");
-	ConsolePrintColor(0, 255, 11, "-- Extra Mirror v2.1\n");
+	ConsolePrintColor(0, 255, 11, "-- Extra Mirror v2.2\n");
 	ConsolePrintColor(255, 255, 255, "-- Use 'credits' for more information\n");
 	ConsolePrintColor(255, 255, 255, "-- Thank's to Realwar for title\n");    
 	ConsolePrintColor(255, 255, 255, "-- Thank's to FightMagister for functions\n");
