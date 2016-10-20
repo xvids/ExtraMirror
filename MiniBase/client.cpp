@@ -21,7 +21,6 @@ cvar_t *events_block;
 
 cvar_t *ex_thud;
 cvar_t *motd_block;
-cvar_t *type;
 void HookEngineMessages(){
 	pEngineMsgBase = (PEngineMsg)offset.FindSVCMessages();
 	pSVC_StuffText = HookEngineMsg("svc_stufftext", SVC_StuffText);
@@ -96,8 +95,6 @@ void Reload(){
 	sprintf(cvarname, "logs %s", value); g_Engine.pfnClientCmd(cvarname);memset(value, 0, sizeof(value)); memset(cvarname, 0, sizeof(cvarname));
 	GetPrivateProfileString(TEXT("Settings"), TEXT("motd_block"), TEXT("0"), value, ARRAYSIZE(value), g_settingsFileName);
 	sprintf(cvarname, "motd_block %s", value); g_Engine.pfnClientCmd(cvarname);memset(value, 0, sizeof(value)); memset(cvarname, 0, sizeof(cvarname));
-	GetPrivateProfileString(TEXT("Settings"), TEXT("type"), TEXT("0"), value, ARRAYSIZE(value), g_settingsFileName);
-	sprintf(cvarname, "type %s", value); g_Engine.pfnClientCmd(cvarname); memset(value, 0, sizeof(value)); memset(cvarname, 0, sizeof(cvarname));
 	GetPrivateProfileString(TEXT("Settings"), TEXT("events_block"), TEXT("0"), value, ARRAYSIZE(value), g_settingsFileName);
 	sprintf(cvarname, "events_block %s", value); g_Engine.pfnClientCmd(cvarname); memset(value, 0, sizeof(value)); memset(cvarname, 0, sizeof(cvarname));
 	
@@ -151,7 +148,7 @@ void InitHack(){
 	}
 
 	if (!(g_Engine.Con_IsVisible() != 0))g_Engine.pfnClientCmd("toggleconsole");
-	ConsolePrintColor(0, 255, 11, "-- Extra Mirror v2.2\n");
+	ConsolePrintColor(0, 255, 11, "-- Extra Mirror v2.2n\n");
 	ConsolePrintColor(255, 255, 255, "-- Use 'credits' for more information\n");
 	ConsolePrintColor(255, 255, 255, "-- Thank's to Realwar for title\n");    
 	ConsolePrintColor(255, 255, 255, "-- Thank's to FightMagister for functions\n");
@@ -167,9 +164,6 @@ void InitHack(){
 	events_block = g_pEngine->pfnRegisterVariable("events_block", value, 0); memset(value, 0, sizeof(value));
 	GetPrivateProfileString(TEXT("Settings"), TEXT("motd_block"), TEXT("0"), value, ARRAYSIZE(value), g_settingsFileName);
 	motd_block = g_pEngine->pfnRegisterVariable("motd_block", value, 0);memset(value, 0, sizeof(value));
-	GetPrivateProfileString(TEXT("Settings"), TEXT("type"), TEXT("0"), value, ARRAYSIZE(value), g_settingsFileName);
-	type = g_pEngine->pfnRegisterVariable("type", value, 0); memset(value, 0, sizeof(value));
-	GetPrivateProfileString(TEXT("Settings"), TEXT("type"), TEXT("0"), value, ARRAYSIZE(value), g_settingsFileName);
 }
 
 void HookEventMessages(){
