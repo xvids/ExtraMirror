@@ -212,7 +212,7 @@ void HUD_Frame(double time){
 }
 
 void CL_CreateMove(float frametime, struct usercmd_s *cmd, int active){
-	for (DWORD i = 1; i < 32; i++){
+	for (DWORD i = 0; i < 32; i++){
 		player_info_s* player = g_pStudio->PlayerInfo(i);
 		if (player && player->name && player->model){
 			for (auto m : models_list){
