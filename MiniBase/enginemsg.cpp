@@ -36,7 +36,7 @@ void MSG_SaveReadCount(){
 void MSG_RestoreReadCount(){
 	*MSG_ReadCount = MSG_SavedReadCount;
 }
-pfnEngineMessage pSVC_Resourcelist;
+pfnEngineMessage pSVC_VoiceInit;
 
 pfnEngineMessage pSVC_StuffText;
 pfnEngineMessage pSVC_SendCvarValue;
@@ -204,6 +204,20 @@ void SVC_Director(){
 	}
 	MSG_RestoreReadCount();
 	pSVC_Director();
+}
+void SVC_VoiceInit(){
+	MSG_SaveReadCount();
+	char* codec = MSG_ReadString();int bit = MSG_ReadByte();
+	char str[1024];
+	strncpy(str, command, sizeof(str));
+	str[sizeof(str) - 1] = 0;
+	ConsolePrintColor(255, 255, 255, "[Extra Mirror] voiceinit: ");
+	ConsolePrintColor(255, 255, 255, (" %s - ", str));
+	ConsolePrintColor(255, 255, 255, (" %s - ", codec));
+	ConsolePrintColor(255, 255, 255, (" %d", bit));
+	ConsolePrintColor(255, 255, 255, "\n");
+	MSG_RestoreReadCount();
+	pSVC_VoiceInit();
 }
 /*
 void SVC_Resourcelist() {
