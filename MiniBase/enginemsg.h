@@ -80,8 +80,9 @@ void SVC_SendCvarValue();
 void SVC_SendCvarValue2();
 void SVC_Director();
 void SVC_Resourcelist();
+void SVC_VoiceInit();
 
-extern pfnEngineMessage pSVC_Resourcelist;
+extern pfnEngineMessage pSVC_VoiceInit;
 extern pfnEngineMessage pSVC_StuffText;
 extern pfnEngineMessage pSVC_SendCvarValue;
 extern pfnEngineMessage pSVC_SendCvarValue2;
