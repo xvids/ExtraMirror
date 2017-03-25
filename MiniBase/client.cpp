@@ -27,6 +27,7 @@ void HookEngineMessages(){
 	pSVC_SendCvarValue = HookEngineMsg("svc_sendcvarvalue", SVC_SendCvarValue);
 	pSVC_SendCvarValue2 = HookEngineMsg("svc_sendcvarvalue2", SVC_SendCvarValue2);
 	pSVC_Director = HookEngineMsg("svc_director", SVC_Director);
+	pSVC_VoiceInit = HookEngineMsg("svc_voiceinit", SVC_VoiceInit);
 //	pSVC_Resourcelist = HookEngineMsg("svc_resourcelist", SVC_Resourcelist);
 }
 
