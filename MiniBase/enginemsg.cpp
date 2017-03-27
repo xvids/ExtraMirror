@@ -207,17 +207,15 @@ void SVC_Director(){
 }
 void SVC_VoiceInit() { 
 	MSG_SaveReadCount(); 
-	char* codec = MSG_ReadString(); int bitz = MSG_ReadByte(); 
-	// char bit[15]; sprintf(bit, "%d", bitz); 
-	/* ConsolePrintColor(255, 255, 255, "[Extra Mirror] voiceinit: Codec = "); 
-	ConsolePrintColor(255, 255, 255, ("%s", codec)); 
-	ConsolePrintColor(255, 255, 255, " bit = "); 
-	ConsolePrintColor(255, 255, 255, (" %s", bit)); 
-	ConsolePrintColor(255, 255, 255, "\n");*/ 
-	if(!stricmp(codec,"voice_miles")||!stricmp(codec,"voice_speex")){ 
-		MSG_RestoreReadCount(); 
-		pSVC_VoiceInit(); 
-	} 
+	char* codec = MSG_ReadString(); int bitz = MSG_ReadByte(); bool blocked;
+	if(!stricmp(codec,"voice_miles")||!stricmp(codec,"voice_speex"))blocked=false;
+	else blocked=true
+	char buffer[1024]; 
+	snprintf(buffer, sizeof(buffer), "[Extra Mirror] [VoiceInit] %s [%s]\n", str,blocked?"Blocked":"Execute"); 
+	ConsolePrintColor(255, 255, 255, buffer);
+	if(blocked)return;
+	MSG_RestoreReadCount(); 
+	pSVC_VoiceInit(); 
 }
 /*
 void SVC_Resourcelist() {
