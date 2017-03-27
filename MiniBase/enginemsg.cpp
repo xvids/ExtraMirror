@@ -205,19 +205,19 @@ void SVC_Director(){
 	MSG_RestoreReadCount();
 	pSVC_Director();
 }
-void SVC_VoiceInit() {
-	MSG_SaveReadCount();
-	char* codec = MSG_ReadString(); int bitz = MSG_ReadByte();
-	char str[1024], bit[15]; sprintf(bit, "%d", bitz);
-	strncpy(str, codec, sizeof(str));
-	str[sizeof(str) - 1] = 0;
-	ConsolePrintColor(255, 255, 255, "[Extra Mirror] voiceinit: ");
-	ConsolePrintColor(255, 255, 255, (" %s - ", str));
-	ConsolePrintColor(255, 255, 255, (" %s - ", codec));
-	ConsolePrintColor(255, 255, 255, (" %s", bit));
-	ConsolePrintColor(255, 255, 255, "\n");
-	MSG_RestoreReadCount();
-	pSVC_VoiceInit();
+void SVC_VoiceInit() { 
+	MSG_SaveReadCount(); 
+	char* codec = MSG_ReadString(); int bitz = MSG_ReadByte(); 
+	// char bit[15]; sprintf(bit, "%d", bitz); 
+	/* ConsolePrintColor(255, 255, 255, "[Extra Mirror] voiceinit: Codec = "); 
+	ConsolePrintColor(255, 255, 255, ("%s", codec)); 
+	ConsolePrintColor(255, 255, 255, " bit = "); 
+	ConsolePrintColor(255, 255, 255, (" %s", bit)); 
+	ConsolePrintColor(255, 255, 255, "\n");*/ 
+	if(!stricmp(codec,"voice_miles")||!stricmp(codec,"voice_speex")){ 
+		MSG_RestoreReadCount(); 
+		pSVC_VoiceInit(); 
+	} 
 }
 /*
 void SVC_Resourcelist() {
