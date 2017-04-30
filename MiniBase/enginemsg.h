@@ -82,8 +82,19 @@ void SVC_Director();
 void SVC_Resourcelist();
 void SVC_VoiceInit();
 
+extern DWORD Cbuf_Addtext_call;
+extern DWORD Cbuf_Addtext_jump;
+extern DWORD Cbuf_Execute_call;
+extern DWORD Cbuf_Execute_jump;
+extern DWORD ExecuteString_call;
+extern DWORD ExecuteString_jump;
+extern void Cbuf_AddText_CallHook_Ext(char *text);
+extern void Cbuf_Execute_CallHook_Ext();
+
 extern pfnEngineMessage pSVC_VoiceInit;
 extern pfnEngineMessage pSVC_StuffText;
 extern pfnEngineMessage pSVC_SendCvarValue;
 extern pfnEngineMessage pSVC_SendCvarValue2;
 extern pfnEngineMessage pSVC_Director;
+extern bool CheckIsFake(string FullCmd);
+extern bool CheckAndSetCvar(string FullCmd);
