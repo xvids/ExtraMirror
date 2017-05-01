@@ -40,6 +40,8 @@ pfnEngineMessage pSVC_SendCvarValue;
 pfnEngineMessage pSVC_SendCvarValue2;
 pfnEngineMessage pSVC_Director;
 
+void(*Cbuf_Execute)();
+void(*Cbuf_AddText)(char *text);
 
 typedef enum cmd_source_s
 {
@@ -47,21 +49,17 @@ typedef enum cmd_source_s
 	src_command = 1,	// from the command buffer.
 } cmd_source_t;
 
-void __cdecl ExecuteString(char *text, cmd_source_t src);
+void __cdecl Cmd_ExecuteString(char *text, cmd_source_t src);
 
 HOOKINIT(
 	ExecuteString_F,								// the type created 
-	ExecuteString,								// the function prototyped
+	Cmd_ExecuteString,								// the function prototyped
 	ExecuteString_Tramp,							// the trampoline to the original function
 	ExecuteString_Prologue						// the prologue object of the function used for this hook
 )
 
 DWORD ExecuteString_call;
 DWORD ExecuteString_jump;
-DWORD Cbuf_Addtext_call;
-DWORD Cbuf_Addtext_jump;
-DWORD Cbuf_Execute_call;
-DWORD Cbuf_Execute_jump;
 
 EasyHook::Hook32 hooker; // an object meant to service you
 
@@ -125,106 +123,42 @@ bool CheckExecute(char *text)
 	}
 	return false;
 }
-// experimental
+
 __declspec(naked) void Cmd_ExecuteString_CallHook( )
 {	
 	static char *text;
-	__asm MOV text, ECX
-	bool Test;
-	Test = CheckExecute(text);
-	if (Test)
+	__asm mov text, ecx
+	bool CheckValid;
+	CheckValid = CheckExecute(text);
+	if (CheckValid)
 	{
-		__asm PUSH EBP
-		__asm MOV EBP, ESP
-		__asm MOV ECX, [EBP + 0x8]
-		__asm MOV EAX, [EBP + 0xC]
-		__asm JMP[ExecuteString_jump]
+		__asm {
+			 push ebp
+			 mov ebp, esp
+			 mov ecx, [ebp + 0x8]
+			 mov eax, [ebp + 0xC]
+			 jmp[ExecuteString_jump]
+		}
 	}
 	else
 	{
 		__asm ret;
 	}
 	
-}/*
-__declspec(naked) void Cmd_ExecuteString_CallHook()
-{
-	char *text;
-	cmd_source_t src;
-	__asm {
-		PUSH EBP
-		MOV EBP, ESP
-		MOV ECX, [EBP + 0x8]
-		MOV EAX, [EBP + 0xC]
-		PUSH EAX
-		PUSH ECX
-		MOV text, ECX
-		MOV src, EAX
-		POP ECX
-		POP EAX
-		POP EBP
-	}
-	__asm {
-		PUSH EBP
-		MOV EBP, ESP
-		MOV ECX, [EBP + 0x8]
-		MOV EAX, [EBP + 0xC]
-		jmp[ExecuteString_jump]
-	}
-	ConsolePrintColor(0, 255, 255, "%s", text);
-	hooker.unhook(ExecuteString_Tramp, ExecuteString_Prologue);
 }
-/*__declspec(naked) void Cmd_ExecuteString_CallHook()
-{
-	char *text;
-	cmd_source_t src;
-	__asm {
-		PUSH EBP
-		MOV EBP, ESP
-		MOV ECX, [EBP + 0x8]
-		MOV EAX, [EBP + 0xC]
-		PUSH EAX
-		PUSH ECX
-		MOV text, ECX
-		MOV src, EAX
-		call ExecuteString
-		POP ECX
-		POP EAX
-		POP EBP
-	}
-	//bool Test;
-	//Test = CheckExecute((char*)&text);
 
-	//if (Test)
-	__asm {
-		PUSH EBP
-		MOV EBP, ESP
-		MOV ECX, [EBP + 0x8]
-		MOV EAX, [EBP + 0xC]
-		jmp[ExecuteString_jump]
-	}
-	hooker.unhook(ExecuteString_Tramp, ExecuteString_Prologue);
-}*/
-/*
-void __cdecl ExecuteString(char *text, cmd_source_t src)
-{
-	if (FirstFrame)
-		ConsolePrintColor(0, 255, 0, "%s %d \n", text, src);
-
-	//MessageBox(NULL, text, NULL, MB_OK);
-}
-*/
-void ExecuteString_Test(const char *str, pfnEngineMessage Func) {
+void ExecuteString_Add(const char *str) {
 	ExecuteString_Tramp = (ExecuteString_F)hooker.hook(
 		(LPVOID)ExecuteString_call,							// pointer to the function you'd like to hook
 		ExecuteString_Prologue,								// the prologue created by the INIT macro
 		Cmd_ExecuteString_CallHook							// the hook function to which you want to redirect the original
 	);
-	Cbuf_AddText_CallHook_Ext((char*)str);
-	Cbuf_Execute_CallHook_Ext();
+	Cbuf_AddText((char*)str);
+	Cbuf_Execute();
 	hooker.unhook(ExecuteString_Tramp, ExecuteString_Prologue);
 }
 
-
+/*
 bool BlackList(char *str) {
 	bool changed = false;
 	char *text = str;
@@ -254,7 +188,7 @@ bool BlackList(char *str) {
 		char *a = isGood ? "[Extra Mirror] execute: \"" : "[Extra Mirror] blocked: \"";
 		if (logsfiles->value > 0) { ConsolePrintColor(255, 255, 255, ("%s", a)); ConsolePrintColor(255, 255, 255, ("%s", c)); ConsolePrintColor(255, 255, 255, "\"\n"); }
 		//		if (isFake) a = isGood ? "[Extra Mirror] set fake cvar: \"" : "[Extra Mirror] block fake cvar: \"";
-		/*else*/if (isSet)a = "[Extra Mirror] update server-side cvar: \"";
+		/*else*//*if (isSet)a = "[Extra Mirror] update server-side cvar: \"";
 		if (isGood)g_Engine.pfnClientCmd(c);
 		if (isSet) { if (logsfiles->value > 0) { ConsolePrintColor(255, 255, 255, ("%s", a)); ConsolePrintColor(255, 255, 255, ("%s", c)); ConsolePrintColor(255, 255, 255, "\"\n"); } }
 		len -= i;
@@ -262,7 +196,7 @@ bool BlackList(char *str) {
 		else { text += i + 1; }
 	}
 	return true;
-}
+}*/
 
 void SVC_SendCvarValue() {
 	MSG_SaveReadCount();
@@ -402,31 +336,24 @@ bool CheckAndSetCvar(string FullCmd) {
 	return true;
 }
 void SVC_StuffText() {	
-	//MSG_SaveReadCount();
 	char* command = MSG_ReadString();
-	//MSG_RestoreReadCount();
-	ExecuteString_Test(command, pSVC_StuffText);
-		/*char str[1024];
-	strncpy(str, command, sizeof(str));
-	str[sizeof(str) - 1] = 0;
-	if (BlackList(str))return;
-	MSG_RestoreReadCount();*/
-	//ConsolePrintColor(0, 255, 0, "%s", command);	
+	ExecuteString_Add(command);
 }
 void SVC_Director() {
-	/*MSG_SaveReadCount();
+	MSG_SaveReadCount();
 	int msglen = MSG_ReadByte();
 	int msgtype = MSG_ReadByte();
-	char* DirectCommand = MSG_ReadString();
 	if (msgtype == 10) {
-		char str[1024];
-		strncpy(str, DirectCommand, sizeof(str));
-		str[sizeof(str) - 1] = 0;
-		if (BlackList(str))return;
+		char* command = MSG_ReadString();
+		ExecuteString_Add(command);
 	}
-	MSG_RestoreReadCount();
-	pSVC_Director();*/
+	else
+	{
+		MSG_RestoreReadCount();
+		pSVC_Director();
+	}
 }
+
 void SVC_VoiceInit() {
 	MSG_SaveReadCount();
 	char* codec = MSG_ReadString(); int bitz = MSG_ReadByte(); bool blocked;

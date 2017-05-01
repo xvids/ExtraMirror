@@ -1,11 +1,6 @@
 #ifndef EASYHOOK_HPP
 #define EASYHOOK_HPP
-#include <array>
-#include <cstdio>
-#include <iostream>
-#include <Windows.h>
-#include <winternl.h>
-
+#include "main.h"
 /* This macro creates the type, an instance of the type, and a prologue object specific to that function */
 #define HOOKINIT(functor_type, function, trampoline_name, prologue_name) \
 	using functor_type = decltype(&function); \

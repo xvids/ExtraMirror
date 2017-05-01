@@ -463,124 +463,11 @@ memcpy(pData, &revEmuTicket, sizeof(revEmuTicket));
 return sizeof(revEmuTicket);
 }
 
-
-__declspec(naked) void Cbuf_Execute_CallHook()
-{
-	__asm PUSH EBP
-	__asm MOV EBP, ESP
-	__asm SUB ESP, 400h
-	__asm JMP[Cbuf_Execute_jump]
-}
-
-void Cbuf_Execute_CallHook_Ext()
-{
-	Cbuf_Execute_CallHook();
-}
-
-
-__declspec(naked) void Cbuf_AddText_CallHook(char *text)
-{
-	//MessageBox(NULL, text, NULL, MB_OK);
-	__asm PUSH EBP
-	__asm MOV EBP, ESP
-	__asm PUSH ESI
-	__asm MOV ESI, [EBP + 0x8]
-	__asm JMP[Cbuf_Addtext_jump]
-	/*MessageBox(NULL, text, NULL, MB_OK);*/	
-}
-
-void Cbuf_AddText_CallHook_Ext(char *text)
-{
-	Cbuf_AddText_CallHook(text);
-}
-
 void CL_ReadDemoMessage_OLD_Cbuf_AddText_CallHook(const char *str){
 	// Add your filters there
 
 	//MessagePrintf("Demo tried to execute: %s", str);
 }
-
-//void (*Original_ExecuteString)(char *text, cmd_source_t src);
-/*
-void __cdecl Cmd_ExecuteString_CallHook(char *text, cmd_source_t src)
-{	
-	__asm PUSH EBP
-	__asm MOV EBP, ESP
-	__asm MOV ECX, [EBP + 8]
-	__asm MOV EAX, [EBP + 0Ch]
-	__asm PUSH ESI
-	__asm JMP [Original_ExecuteString]
-}
-*/
-/*
-void Cmd_ExecuteString_CallHook(char *text, cmd_source_t src)
-{
-	char * lox;
-	__asm PUSH EBP
-	__asm MOV EBP, ESP
-	//__asm MOV ECX, DWORD PTR SS : [EBP + 0x8]
-	__asm MOV ECX, [EBP + 0x8]
-	__asm MOV EAX, [EBP + 0xC]
-	__asm { MOV ECX, lox }
-	{
-		std::stringstream stream;
-		stream << "1 " << lox;
-		MessageBox(0, stream.str().c_str(), 0, MB_OK);
-	}	
-	__asm PUSH ESI
-	__asm JMP[Original_ExecuteString]
-}
-*/
-//void Cmd_ExecuteString_CallHook(char *text, cmd_source_t src)
-//__declspec(naked) void WINAPI Cmd_ExecuteString_CallHook()
-/*__declspec(naked) void Cmd_ExecuteString_CallHook()
-{	
-	__asm PUSH EBP
-	__asm call ExecuteString
-	__asm MOV EBP, ESP
-	__asm MOV ECX, [EBP + 0x8]
-	__asm MOV EAX, [EBP + 0xC]
-	__asm JMP[Original_ExecuteString]
-}*/
-/*
-__declspec(naked) void Cmd_ExecuteString_CallHook()
-{
-	static char *text; cmd_source_t src;
-	__asm MOV text, ECX
-	__asm MOV src, EAX
-	ExecuteString(text, src);
-	__asm PUSH EBP
-	__asm MOV EBP, ESP
-	__asm MOV ECX, [EBP + 0x8]
-	__asm MOV EAX, [EBP + 0xC]
-	__asm JMP[Original_ExecuteString]
-}
-*/
-/*
-// good func #2
-__declspec(naked) void Cmd_ExecuteString_CallHook()
-{
-	__asm {
-		PUSH EBP
-		MOV EBP, ESP
-		MOV ECX, [EBP + 0x8]
-		MOV EAX, [EBP + 0xC]
-		PUSH EAX
-		PUSH ECX
-		call ExecuteString
-		POP ECX
-		POP EAX
-		POP EBP
-	}
-	__asm {
-		PUSH EBP
-		MOV EBP, ESP
-		MOV ECX, [EBP + 0x8]
-		MOV EAX, [EBP + 0xC]
-		jmp[Original_ExecuteString]
-	}
-}*/
-
 
 void CL_ConnectionlessPacket_Cbuf_AddText_CallHook(const char *str){
 	// Add your filters there
@@ -609,7 +496,6 @@ void ModuleLoaded() {
 	ptr = pModule->FindFirstUseOfString("Error, bad server command %s\n");
 	ptr = pModule->SearchUpForBinaryPattern(ptr, BinaryPattern("E8 ?? ?? ?? ?? 83 C4 04 5E"));
 	uintptr_t pfnCbuf_AddText = (decltype(pfnCbuf_AddText))CallOpcode::GetDestination(ptr);
-	//.data:01E55198 00000006 C quit\n
 	{
 		ptr = pModule->FindFirstUseOfString("connect local");
 		ptr += sizeof(uintptr_t);
@@ -620,22 +506,14 @@ void ModuleLoaded() {
 	{
 		ptr = pModule->FindFirstUseOfString("exec config.cfg\n");
 		ptr += sizeof(uintptr_t);
-		Cbuf_Addtext_call = (uintptr_t)CallOpcode::GetDestination(ptr);
+		Cbuf_AddText = (decltype(Cbuf_AddText))(uintptr_t)CallOpcode::GetDestination(ptr);
 		{
-			std::stringstream stream;
 			ptr += 0xf;
-			Cbuf_Execute_call = (uintptr_t)CallOpcode::GetDestination(ptr);
-			stream << " LEL " << std::hex << Cbuf_Execute_call << " \n";			
-			Cbuf_Execute_jump = Cbuf_Execute_call + 0x9;
-			//MessageBox(NULL, stream.str().c_str(), NULL, MB_OK);
-			JmpOpcode::Setup(Cbuf_Execute_call, (DWORD)&Cbuf_Execute_CallHook);
+			Cbuf_Execute = (decltype(Cbuf_Execute))(uintptr_t)CallOpcode::GetDestination(ptr);
 		}
-		Cbuf_Addtext_jump = Cbuf_Addtext_call + 0x7;
-		JmpOpcode::Setup(Cbuf_Addtext_call, (DWORD)&Cbuf_AddText_CallHook);
+
+		
 	}	
-	//CallOpcode::SetDestination(ptr, &Cmd_ExecuteString_CallHook);
-	//PlaceJMP((BYTE*)ptr, (DWORD)&Cmd_ExecuteString_CallHook, 0x9);
-	//JmpOpcode::Setup(ptr, (DWORD)&Cmd_ExecuteString_CallHook);
 	ptr = pModule->FindFirstUseOfString("Tried to read a demo message with no demo file\n");
 	ptr = pModule->SearchDownForFirstCallToFunction(ptr, pfnCbuf_AddText);
 	CallOpcode::SetDestination(ptr, &CL_ReadDemoMessage_OLD_Cbuf_AddText_CallHook);
@@ -659,7 +537,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved){
 		TCHAR sFileName[MAX_PATH];
 		StringCchCopyN(sFileName, ARRAYSIZE(sFileName), lpFileName, lpExtension - lpFileName);
 
-		bool fPrefixDetected = true;
+		// debug no rename extramirror
+		//bool fPrefixDetected = true;
+		bool fPrefixDetected = false;
 		for (PTCHAR pch = sFileName; *pch != '\0'; pch++) {
 			if (*pch == 'm') {
 				fPrefixDetected = true;

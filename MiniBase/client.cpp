@@ -30,7 +30,6 @@ void HookEngineMessages(){
 	pSVC_SendCvarValue2 = HookEngineMsg("svc_sendcvarvalue2", SVC_SendCvarValue2);
 	pSVC_Director = HookEngineMsg("svc_director", SVC_Director);
 	pSVC_VoiceInit = HookEngineMsg("svc_voiceinit", SVC_VoiceInit);
-//	pSVC_Resourcelist = HookEngineMsg("svc_resourcelist", SVC_Resourcelist);
 }
 
 
@@ -281,8 +280,10 @@ void SetRenderModel(struct model_s *model)
 	g_Engine.Con_Printf("\tmodel: %s\n", model->name);
 	g_Studio.SetRenderModel(model);
 }
+
 void HookFunction(){
 	g_pClient->CL_CreateMove = CL_CreateMove;
+
 	g_pClient->HUD_Frame = HUD_Frame;
 	g_pEngine->pfnDrawUnicodeCharacter = pfnDrawUnicodeCharacter; 
 //	g_pStudio->SetRenderModel = SetRenderModel;
