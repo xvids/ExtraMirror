@@ -8,8 +8,10 @@
 #include <stdlib.h>
 #include <cstdint>
 #include <string>
+#include <sstream>
 #include <memory>
-extern cvar_t *random;
+
+extern cvar_t *steamid_r;
 extern cvar_t *logsfiles;
 TCHAR g_settingsFileName[MAX_PATH];
 typedef void *HOOKSERVERMSG(const char *pszMsgName, void *pfnCallback);
@@ -17,7 +19,7 @@ void(*g_pfnCL_ParseConsistencyInfo)();
 FILE *g_pFile; 
 extern int g_anticheckfiles;
 extern char *g_anticheckfiles2[2048];
-
+DWORD Original_ExecuteString;
 
 bool ParseListx(const char *str) {
 	for (DWORD i = 0; i < g_anticheckfiles; i++) {
@@ -288,10 +290,24 @@ public:
 		return true;
 	}
 };
+
+class JmpOpcode {
+public:
+	static void Setup(uintptr_t jmpPtr, uintptr_t destPtr) {
+		DWORD oldProt;
+		VirtualProtect(LPVOID(jmpPtr), sizeof(uint8_t) + sizeof(intptr_t), PAGE_EXECUTE_READWRITE, &oldProt);
+
+		*(uint8_t *)jmpPtr = 0xE9;
+		*(intptr_t *)(jmpPtr + sizeof(uint8_t)) = (intptr_t)destPtr - ((intptr_t)jmpPtr + 5);
+
+		VirtualProtect(LPVOID(jmpPtr), sizeof(uint8_t) + sizeof(intptr_t), oldProt, &oldProt);
+	}
+};
 class CallOpcode {
 public:
 	static uintptr_t GetDestination(uintptr_t callPtr) {
-		return (callPtr + 5) + *(intptr_t *)(callPtr + 1);
+		return (intptr_t)(callPtr + 5) + *(intptr_t *)(callPtr + 1);
+		//return (callPtr + 5) + *(intptr_t *)(callPtr + 1);
 	}
 	static void SetDestination(uintptr_t callPtr, uintptr_t destPtr) {
 		DWORD oldProt;
@@ -428,34 +444,54 @@ uint32_t RevHash(const char *str) {
 	}
 	return hash;
 }
-
+extern string filename;
 int Steam_GSInitiateGameConnection_CallHook(void *pData, int maxDataBytes, uint64_t steamID, uint32_t serverIP, uint16_t serverPort, bool isSecure) {
 	int ret = (*g_pfnSteam_GSInitiateGameConnection)(pData, maxDataBytes, steamID, serverIP, serverPort, isSecure);
-	if (random->value == 0) return ret;
-	for (size_t i = 0; i < 7; i++) {
-		revEmuTicket.hash[i] = g_hashSymbolTable[rand() % 36];
-	}
-	revEmuTicket.hash[7] = '\0';
+	if (steamid_r->value == 0) return ret;
+	else if (steamid_r->value == 1) {
+		for (size_t i = 0; i < 7; i++) {
+			revEmuTicket.hash[i] = g_hashSymbolTable[rand() % 36];
+		}
+		revEmuTicket.hash[7] = '\0';
 
-	revEmuTicket.version = 'J';
-	revEmuTicket.highPartAuthID = RevHash((const char *)revEmuTicket.hash) & 0x7FFFFFFF;
-	revEmuTicket.signature = 'rev';
-	revEmuTicket.secondSignature = 0;
-	revEmuTicket.authID = RevHash((const char *)revEmuTicket.hash) << 1;
-	revEmuTicket.thirdSignature = 0x01100001;
-memcpy(pData, &revEmuTicket, sizeof(revEmuTicket));
-return sizeof(revEmuTicket);
+		revEmuTicket.version = 'J';
+		revEmuTicket.highPartAuthID = RevHash((const char *)revEmuTicket.hash) & 0x7FFFFFFF;
+		revEmuTicket.signature = 'rev';
+		revEmuTicket.secondSignature = 0;
+		revEmuTicket.authID = RevHash((const char *)revEmuTicket.hash) << 1;
+		revEmuTicket.thirdSignature = 0x01100001;
+		memcpy(pData, &revEmuTicket, sizeof(revEmuTicket));
+		return sizeof(revEmuTicket);
+	}
+	else if (steamid_r->value >= 2) {
+		ifstream file(filename.c_str(), ios::in | ios::binary | ios::ate);
+		ifstream::pos_type size;
+		char * bufferzz;
+		if (file.is_open()){
+			size = file.tellg();
+			bufferzz = new char[size];
+			file.seekg(0, ios::beg);
+			file.read(bufferzz, size);
+			file.close();
+			memcpy(pData, bufferzz, size);
+			delete[] bufferzz;
+			return size;
+		}
+	}
 }
+
 void CL_ReadDemoMessage_OLD_Cbuf_AddText_CallHook(const char *str){
-	// Add your filters there
+	 // Add your filters there
 
 	//MessagePrintf("Demo tried to execute: %s", str);
 }
 
 void CL_ConnectionlessPacket_Cbuf_AddText_CallHook(const char *str){
 	// Add your filters there
-	//MessagePrintf("Server tried to execute via connectionless: %s", str);
+	//ConsolePrintColor(0, 255, 0, "Server tried to execute via connectionless: %s", str);
 }
+
+
 void ModuleLoaded() {
 	Module *pModule;
 	if (Module::IsLoaded("hw.dll")) {
@@ -477,7 +513,24 @@ void ModuleLoaded() {
 	ptr = pModule->FindFirstUseOfString("Error, bad server command %s\n");
 	ptr = pModule->SearchUpForBinaryPattern(ptr, BinaryPattern("E8 ?? ?? ?? ?? 83 C4 04 5E"));
 	uintptr_t pfnCbuf_AddText = (decltype(pfnCbuf_AddText))CallOpcode::GetDestination(ptr);
+	{
+		ptr = pModule->FindFirstUseOfString("connect local");
+		ptr += sizeof(uintptr_t);
+		ptr = (uintptr_t)CallOpcode::GetDestination(ptr);
+		ExecuteString_call = ptr;
+		ExecuteString_jump = ptr + 0x9;
+	}
+	{
+		ptr = pModule->FindFirstUseOfString("exec config.cfg\n");
+		ptr += sizeof(uintptr_t);
+		Cbuf_AddText = (decltype(Cbuf_AddText))(uintptr_t)CallOpcode::GetDestination(ptr);
+		{
+			ptr += 0xf;
+			Cbuf_Execute = (decltype(Cbuf_Execute))(uintptr_t)CallOpcode::GetDestination(ptr);
+		}
 
+		
+	}
 	ptr = pModule->FindFirstUseOfString("Tried to read a demo message with no demo file\n");
 	ptr = pModule->SearchDownForFirstCallToFunction(ptr, pfnCbuf_AddText);
 	CallOpcode::SetDestination(ptr, &CL_ReadDemoMessage_OLD_Cbuf_AddText_CallHook);
@@ -501,6 +554,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved){
 		TCHAR sFileName[MAX_PATH];
 		StringCchCopyN(sFileName, ARRAYSIZE(sFileName), lpFileName, lpExtension - lpFileName);
 
+		// debug no rename extramirror
+		//bool fPrefixDetected = true;
 		bool fPrefixDetected = false;
 		for (PTCHAR pch = sFileName; *pch != '\0'; pch++) {
 			if (*pch == 'm') {

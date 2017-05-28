@@ -67,13 +67,13 @@ extern HL_MSG_ReadBitVec3Coord MSG_ReadBitVec3Coord;
 extern HL_MSG_ReadBits MSG_ReadBits;
 extern HL_MSG_StartBitReading MSG_StartBitReading;
 extern HL_MSG_EndBitReading MSG_EndBitReading;
-
+/*
 typedef void(*HL_MSG_CBuf_AddText)(char* text);
-
 extern HL_MSG_CBuf_AddText CBuf_AddText_Orign;
+*/
 void MSG_SaveReadCount();
 void MSG_RestoreReadCount();
-void CBuf_AddText(char* text);
+//void CBuf_AddText(char* text);
 
 void SVC_StuffText();
 void SVC_SendCvarValue();
@@ -82,8 +82,15 @@ void SVC_Director();
 void SVC_Resourcelist();
 void SVC_VoiceInit();
 
+extern DWORD ExecuteString_call;
+extern DWORD ExecuteString_jump;
+extern void(*Cbuf_Execute)();
+extern void(*Cbuf_AddText)(char *text);
+
 extern pfnEngineMessage pSVC_VoiceInit;
 extern pfnEngineMessage pSVC_StuffText;
 extern pfnEngineMessage pSVC_SendCvarValue;
 extern pfnEngineMessage pSVC_SendCvarValue2;
 extern pfnEngineMessage pSVC_Director;
+extern bool CheckIsFake(string FullCmd);
+extern bool CheckAndSetCvar(string FullCmd);

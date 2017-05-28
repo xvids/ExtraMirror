@@ -30,7 +30,7 @@
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v140_xp</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
@@ -70,6 +70,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <TargetExt>.mix</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -169,7 +170,6 @@
     <ClCompile Include="client.cpp" />
     <ClCompile Include="enginemsg.cpp" />
     <ClCompile Include="eventmsg.cpp" />
-    <ClCompile Include="font.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="minIni.c" />
     <ClCompile Include="offset.cpp" />
@@ -180,7 +180,6 @@
     <ClInclude Include="client.h" />
     <ClInclude Include="enginemsg.h" />
     <ClInclude Include="eventmsg.h" />
-    <ClInclude Include="font.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="minGlue.h" />
     <ClInclude Include="minIni.h" />
@@ -190,6 +189,5 @@
     <ClInclude Include="ValveSDK\misc\parsemsg.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets">
-  </ImportGroup>
+  <ImportGroup Label="ExtensionTargets" />
 </Project>

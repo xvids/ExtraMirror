@@ -4,7 +4,7 @@
 #include <TlHelp32.h>
 #include <string>
 #include <map>
-
+#include <vector>
 #include <fstream>
 
 using namespace std;
@@ -40,9 +40,8 @@ using namespace std;
 #include "utils.h"
 #include "usermsg.h"
 #include "enginemsg.h"
-#include "font.h"
 #include "eventmsg.h"
-
+#include "redirect.h"
 
 extern cl_clientfunc_t *g_pClient;
 extern cl_enginefunc_t *g_pEngine;

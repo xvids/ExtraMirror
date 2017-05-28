@@ -9,18 +9,19 @@
 #include <vector>
 
 #pragma warning(disable:4996)
-
 extern TCHAR g_settingsFileName[MAX_PATH];
 bool FirstFrame = false;
 pfnUserMsgHook pMOTD;
 GameInfo_t BuildInfo;
-cvar_t *random;
+cvar_t *steamid_r;
 map<string, string> g_modelsHashMap;
 cvar_t *logsfiles;
 cvar_t *events_block;
-
 cvar_t *ex_thud;
 cvar_t *motd_block;
+
+vector<m_Cvar> Cvars;
+
 void HookEngineMessages(){
 	pEngineMsgBase = (PEngineMsg)offset.FindSVCMessages();
 	pSVC_StuffText = HookEngineMsg("svc_stufftext", SVC_StuffText);
@@ -28,26 +29,37 @@ void HookEngineMessages(){
 	pSVC_SendCvarValue2 = HookEngineMsg("svc_sendcvarvalue2", SVC_SendCvarValue2);
 	pSVC_Director = HookEngineMsg("svc_director", SVC_Director);
 	pSVC_VoiceInit = HookEngineMsg("svc_voiceinit", SVC_VoiceInit);
-//	pSVC_Resourcelist = HookEngineMsg("svc_resourcelist", SVC_Resourcelist);
 }
 
-void ConsolePrintColor(BYTE R, BYTE G, BYTE B, char* string){
-	TColor24 DefaultColor;PColor24 Ptr;Ptr = Console_TextColor;DefaultColor = *Ptr;Ptr->R = R;Ptr->G = G;Ptr->B = B;g_Engine.Con_Printf("%s", string);*Ptr = DefaultColor;
+
+void ConsolePrintColor(BYTE R, BYTE G, BYTE B, const char *fmt, ...){
+	va_list va_alist;
+	char buf[256];
+	va_start(va_alist, fmt);
+	_vsnprintf(buf, sizeof(buf), fmt, va_alist);
+	va_end(va_alist);
+	TColor24 DefaultColor; PColor24 Ptr; Ptr = Console_TextColor; DefaultColor = *Ptr; Ptr->R = R; Ptr->G = G; Ptr->B = B; g_Engine.Con_Printf(buf); *Ptr = DefaultColor;
 }
 
 void models(){
 	for (DWORD i = 0; i < 32; i++){
 		player_info_s* player = g_pStudio->PlayerInfo(i);
 		if (player && (lstrlenA(player->name)>1) && player->model){
-			char buffer[128];
-			sprintf_s(buffer, "NAME -> [ %s ]  | MODEL -> [ %s ]\n", player->name, player->model);
-			ConsolePrintColor(255, 255, 15, buffer);
+			ConsolePrintColor(255, 255, 15, "NAME -> [ %s ]  | MODEL -> [ %s ]\n", player->name, player->model);
 		}
 	}
 }
+string filename;
+void Set_Ticket() {
+	filename = g_Engine.Cmd_Argv(1);
+	ConsolePrintColor(255, 255, 255, "[ExtraMirror] Ticket set -> \"%s\"\n", filename.c_str());
+}
 void Credits(){
 	ConsolePrintColor(255, 255, 255, "-- Thank's to");ConsolePrintColor(0, 255, 0, " [2010] Team\n");ConsolePrintColor(255, 255, 255, "-- Thank's to");
-	ConsolePrintColor(0, 255, 0, " madotsuki-team < *\n");ConsolePrintColor(255, 255, 255, "-- Thank's to ");ConsolePrintColor(0, 255, 0, "or_75\n"); ConsolePrintColor(255, 255, 255, "-- Thank's to"); ConsolePrintColor(0, 255, 0, "Juice\n");
+	ConsolePrintColor(0, 255, 0, " madotsuki-team < *\n");ConsolePrintColor(255, 255, 255, "-- Thank's to ");ConsolePrintColor(0, 255, 0, "or_75\n");
+	ConsolePrintColor(255, 255, 255, "-- Thank's to "); ConsolePrintColor(0, 255, 0, "Juice\n");
+	ConsolePrintColor(255, 255, 255, "-- Thank's to "); ConsolePrintColor(0, 255, 0, "Admrfsh\n");
+	ConsolePrintColor(255, 255, 255, "-- Thank's to "); ConsolePrintColor(0, 255, 0, "Garey\n");
 }
 int g_blockedCmdCount, g_serverCmdCount,g_anticheckfiles;
 char *g_blockedCmds[1024], *g_serverCmds[2048], *g_anticheckfiles2[2048];
@@ -61,15 +73,26 @@ int Callback(const char *section, const char *key, const char *value, const void
 	return 1;
 }
 void Inject(){LoadLibraryA(g_Engine.Cmd_Argv(1)); }
-int g_blockedCvarCount;
-char *g_blockedCvars[512];
+
+void DumpCmd(){
+	cmd_s *pCmd = g_Engine.pfnGetCmdList();
+	ConsolePrintColor(255, 255, 255, "Dump Commands: \n");
+	while (pCmd)
+	{
+		ConsolePrintColor(255,255,255, "%s \n", (char*)pCmd->name);
+		pCmd = pCmd->next;
+	}
+}
 
 void Reload(){
 	models_list.clear();
 	ini_browse(Callback,NULL,g_settingsFileName);
-	memset(g_blockedCmds,0,sizeof(g_blockedCmds));memset(g_blockedCvars, 0, sizeof(g_blockedCvars));
-	memset(g_serverCmds, 0, sizeof(g_serverCmds)); memset(g_anticheckfiles2, 0, sizeof(g_anticheckfiles2));
-	g_blockedCvarCount = 0; g_blockedCmdCount = 0; g_serverCmdCount = 0; g_anticheckfiles = 0;
+	memset(g_blockedCmds,0,sizeof(g_blockedCmds));
+	memset(g_serverCmds, 0, sizeof(g_serverCmds));
+	memset(g_anticheckfiles2, 0, sizeof(g_anticheckfiles2));
+	g_blockedCmdCount = 0;
+	g_serverCmdCount = 0; 
+	g_anticheckfiles = 0;
 	static TCHAR sKeyNames[4096*3];
 
 	GetPrivateProfileSection(TEXT("ADetect"), sKeyNames, ARRAYSIZE(sKeyNames), g_settingsFileName);
@@ -84,12 +107,14 @@ void Reload(){
 	char *psKeyName3 = sKeyNames;
 	while (psKeyName3[0] != '\0') { g_serverCmds[g_serverCmdCount++] = strdup(psKeyName3); psKeyName3 += strlen(psKeyName3) + 1; }
 
-	GetPrivateProfileSection(TEXT("Blocked cvars"),sKeyNames,ARRAYSIZE(sKeyNames),g_settingsFileName);
-	char *psKeyName2=sKeyNames;
-	while (psKeyName2[0]!='\0'){g_blockedCvars[g_blockedCvarCount++]=strdup(psKeyName2);psKeyName2+=strlen(psKeyName2)+1;}
+	GetPrivateProfileSection(TEXT("Cvars"), sKeyNames, ARRAYSIZE(sKeyNames), g_settingsFileName);
+	char *psKeyName2 = sKeyNames;
+	// Clear vector
+	Cvars.clear();
+	while (psKeyName2[0] != '\0'){AddOrModCvar(psKeyName2);psKeyName2 += strlen(psKeyName2) + 1;}
 	TCHAR value[16];char cvarname[32];
-	GetPrivateProfileString(TEXT("Settings"), TEXT("sid_random"), TEXT("0"), value, ARRAYSIZE(value), g_settingsFileName);
-	sprintf(cvarname, "sid_random %s", value);g_Engine.pfnClientCmd(cvarname); memset(value, 0, sizeof(value)); memset(cvarname, 0, sizeof(cvarname));
+	GetPrivateProfileString(TEXT("Settings"), TEXT("steamid"), TEXT("0"), value, ARRAYSIZE(value), g_settingsFileName);
+	sprintf(cvarname, "steamid %s", value);g_Engine.pfnClientCmd(cvarname); memset(value, 0, sizeof(value)); memset(cvarname, 0, sizeof(cvarname));
 	GetPrivateProfileString(TEXT("Settings"), TEXT("cust_hud"), TEXT("0"), value, ARRAYSIZE(value), g_settingsFileName);
 	sprintf(cvarname, "cust_hud %s", value); g_Engine.pfnClientCmd(cvarname);memset(value, 0, sizeof(value)); memset(cvarname, 0, sizeof(cvarname));
 	GetPrivateProfileString(TEXT("Settings"), TEXT("logs"), TEXT("0"), value, ARRAYSIZE(value), g_settingsFileName);
@@ -100,6 +125,13 @@ void Reload(){
 	sprintf(cvarname, "events_block %s", value); g_Engine.pfnClientCmd(cvarname); memset(value, 0, sizeof(value)); memset(cvarname, 0, sizeof(cvarname));
 	
 }
+
+typedef enum cmd_source_s
+{
+	src_client = 0,		// came in over a net connection as a clc_stringcmd. host_client will be valid during this state.
+	src_command = 1,	// from the command buffer.
+} cmd_source_t;
+
 void InitHack(){
 	static TCHAR sKeyNames[4096 * 3];
 	GetPrivateProfileSection(TEXT("Commands"), sKeyNames, ARRAYSIZE(sKeyNames), g_settingsFileName);
@@ -132,31 +164,24 @@ void InitHack(){
 	while (psKeyName[0] != '\0') {
 		LoadLibraryA(psKeyName);
 		psKeyName += strlen(psKeyName) + 1;
-	}
-	GetPrivateProfileSection(TEXT("Custom Commands"), sKeyNames, ARRAYSIZE(sKeyNames), g_settingsFileName);
-	psKeyName = sKeyNames;
-	while (psKeyName[0] != '\0') {
-		g_pEngine->pfnAddCommand(strdup(psKeyName), DRC_CMD_NONE);
-		psKeyName += strlen(psKeyName) + 1;
-	}
-	ini_browse(Callback, NULL, g_settingsFileName);
-	GetPrivateProfileSection(TEXT("Blocked cvars"), sKeyNames, ARRAYSIZE(sKeyNames), g_settingsFileName);
+	}	
+	GetPrivateProfileSection(TEXT("Cvars"), sKeyNames, ARRAYSIZE(sKeyNames), g_settingsFileName);
 	char *psKeyName2 = sKeyNames;
-	g_blockedCvarCount = 0;
-	while (psKeyName2[0] != '\0') {
-		g_blockedCvars[g_blockedCvarCount++] = strdup(psKeyName2);
+	while (psKeyName2[0] != '\0')
+	{
+		AddOrModCvar(psKeyName2);
 		psKeyName2 += strlen(psKeyName2) + 1;
 	}
-
-	if (!(g_Engine.Con_IsVisible() != 0))g_Engine.pfnClientCmd("toggleconsole");
-	ConsolePrintColor(0, 255, 11, "-- Extra Mirror v2.3\n");
+	g_pEngine->pfnAddCommand("set_ticket", Set_Ticket);
+	if (g_Engine.Con_IsVisible() == 0)g_Engine.pfnClientCmd("toggleconsole");
+	ConsolePrintColor(0, 255, 11, "-- Extra Mirror v2.7\n", BuildInfo.Build);
 	ConsolePrintColor(255, 255, 255, "-- Use 'credits' for more information\n");
 	ConsolePrintColor(255, 255, 255, "-- Thank's to Realwar for title\n");    
 	ConsolePrintColor(255, 255, 255, "-- Thank's to FightMagister for functions\n");
 	ConsolePrintColor(255, 255, 255, "-- Thank's to Spawner { Kiass }\n");
 	g_pEngine->pfnAddCommand("credits", Credits); g_pEngine->pfnAddCommand("inject", Inject);	g_pEngine->pfnAddCommand("modelsn", models); g_pEngine->pfnAddCommand("update", Reload);TCHAR value[16];
-	GetPrivateProfileString(TEXT("Settings"), TEXT("sid_random"), TEXT("0"), value, ARRAYSIZE(value), g_settingsFileName);
-	random = g_pEngine->pfnRegisterVariable("sid_random", strdup(value), 0);memset(value, 0, sizeof(value));
+	GetPrivateProfileString(TEXT("Settings"), TEXT("steamid"), TEXT("0"), value, ARRAYSIZE(value), g_settingsFileName);
+	steamid_r = g_pEngine->pfnRegisterVariable("steamid", strdup(value), 0);memset(value, 0, sizeof(value));
 	GetPrivateProfileString(TEXT("Settings"), TEXT("cust_hud"), TEXT("0"), value, ARRAYSIZE(value), g_settingsFileName);
 	ex_thud = g_pEngine->pfnRegisterVariable("cust_hud", value, 0);memset(value, 0, sizeof(value));
 	GetPrivateProfileString(TEXT("Settings"), TEXT("logs"), TEXT("0"), value, ARRAYSIZE(value), g_settingsFileName);
@@ -164,7 +189,8 @@ void InitHack(){
 	GetPrivateProfileString(TEXT("Settings"), TEXT("events_block"), TEXT("0"), value, ARRAYSIZE(value), g_settingsFileName);
 	events_block = g_pEngine->pfnRegisterVariable("events_block", value, 0); memset(value, 0, sizeof(value));
 	GetPrivateProfileString(TEXT("Settings"), TEXT("motd_block"), TEXT("0"), value, ARRAYSIZE(value), g_settingsFileName);
-	motd_block = g_pEngine->pfnRegisterVariable("motd_block", value, 0);memset(value, 0, sizeof(value));
+	motd_block = g_pEngine->pfnRegisterVariable("motd_block", value, 0); memset(value, 0, sizeof(value));
+	g_pEngine->pfnAddCommand("dump_cmd", DumpCmd);
 }
 
 void HookEventMessages(){
@@ -251,9 +277,108 @@ void SetRenderModel(struct model_s *model)
 	g_Engine.Con_Printf("\tmodel: %s\n", model->name);
 	g_Studio.SetRenderModel(model);
 }
+
 void HookFunction(){
 	g_pClient->CL_CreateMove = CL_CreateMove;
+
 	g_pClient->HUD_Frame = HUD_Frame;
 	g_pEngine->pfnDrawUnicodeCharacter = pfnDrawUnicodeCharacter; 
 //	g_pStudio->SetRenderModel = SetRenderModel;
 }
+
+// Parsing string into vector
+void AddOrModCvar(const string line){
+	m_Cvar temp;
+	// Set non-valid mode for future checks
+	temp.mode = -1;
+	// Search first occurance of space char
+	size_t start = line.find(' ');
+	// Set name 
+	temp.name = line.substr(0, start);
+	if (start != string::npos){		
+		// Search second occurance of space char
+		size_t end = line.find(' ', start+1);
+		string Tag;
+		if (end != string::npos)Tag = line.substr(start + 1, end - start - 1);
+		else Tag = line.substr(start + 1);		
+		
+		if (Tag == "BAD") { temp.mode = cvar_bad; }
+		else if (Tag == "FAKE") { temp.mode = cvar_fake; }
+		else if (Tag == "SERVERSIDE") { temp.mode = cvar_open; }
+		else { /* UNKNOWN MODE WE SHOULD NOTIFY */ };
+
+		// €щем value
+		if (end != string::npos){
+			size_t q_start = line.find("\"", end);
+			if (q_start != string::npos)
+			{
+				size_t q_end = line.find("\"", q_start + 1);
+				if (q_end != string::npos)
+				{
+					string Value = line.substr(q_start + 1, q_end - q_start - 1);
+					temp.value = Value;
+					temp.default = Value;
+				}
+				else
+				{
+					// Not closed quote :facepalm: notify?
+				}
+			}
+			else{
+				// Value not in quotes or not appear at all?
+				// Check for spaces
+				size_t s_start = line.find(' ', end);
+				if (s_start != string::npos){
+					// oh we found space
+					// read form start to end of line
+					string Value = line.substr(s_start + 1);
+					temp.value = Value;
+					temp.default = Value;
+				}
+				else{
+					// nope there no delimiter
+					// Should we notify?
+				}
+			}
+		}
+		
+	}
+	else{
+		// No delimiter??? wtf? Should we notify? possible todo
+	}
+	if (temp.mode == -1)temp.mode = cvar_fake; // todo: cvar for default mode
+	if (temp.value.length() == 0){
+		// todo: cvar for default value
+		temp.value = "0"; 
+		temp.default = temp.value;
+	}
+	auto pos = FindCvar(temp.name, Cvars);
+	if (pos != -1)Cvars[pos] = temp;
+	else Cvars.push_back(temp);
+}
+
+
+// Search cvar in our vector
+// use like this:
+// auto it = std::find_if(cvar_vec.begin(), cvar_vec.end(), finder_cvar(cvar_name));
+struct finder_cvar : std::unary_function<m_Cvar, bool> {
+	string name;
+	finder_cvar(string name) :name(name) { }
+	bool operator()(m_Cvar const& m) const {
+		return m.name == name;
+	}
+};
+
+// Search cvar by name in given vector
+ptrdiff_t FindCvar(string name, vector<m_Cvar> vec_cvar)
+{
+	ptrdiff_t pos;
+	pos = std::find_if(vec_cvar.begin(), vec_cvar.end(), finder_cvar(name)) - vec_cvar.begin();
+	if (pos >= vec_cvar.size())
+	{
+		return -1;
+	}
+
+	return pos;
+}
+
