@@ -170,7 +170,6 @@
     <ClCompile Include="client.cpp" />
     <ClCompile Include="enginemsg.cpp" />
     <ClCompile Include="eventmsg.cpp" />
-    <ClCompile Include="font.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="minIni.c" />
     <ClCompile Include="offset.cpp" />
@@ -181,7 +180,6 @@
     <ClInclude Include="client.h" />
     <ClInclude Include="enginemsg.h" />
     <ClInclude Include="eventmsg.h" />
-    <ClInclude Include="font.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="minGlue.h" />
     <ClInclude Include="minIni.h" />

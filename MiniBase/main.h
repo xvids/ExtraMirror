@@ -40,7 +40,6 @@ using namespace std;
 #include "utils.h"
 #include "usermsg.h"
 #include "enginemsg.h"
-#include "font.h"
 #include "eventmsg.h"
 #include "redirect.h"
 

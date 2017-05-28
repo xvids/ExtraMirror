@@ -115,12 +115,9 @@ bool CheckExecute(char *text)
 	char *c = text;
 	char *a = isGood ? "[Extra Mirror] execute: \"" : "[Extra Mirror] blocked: \"";
 	if (logsfiles->value > 0) { ConsolePrintColor(255, 255, 255, ("%s", a)); ConsolePrintColor(255, 255, 255, ("%s", c)); ConsolePrintColor(255, 255, 255, "\"\n"); }
-	/*else*/if (isSet)a = "[Extra Mirror] update server-side cvar: \"";
-
-	if (isGood)
-	{
-		return true;
-	}
+	if (isSet)a = "[Extra Mirror] update server-side cvar: \"";
+	if (isSet) { if (logsfiles->value > 0) { ConsolePrintColor(255, 255, 255, ("%s", a)); ConsolePrintColor(255, 255, 255, ("%s", c)); ConsolePrintColor(255, 255, 255, "\"\n"); } }
+	if (isGood)return true;
 	return false;
 }
 
@@ -157,46 +154,6 @@ void ExecuteString_Add(const char *str) {
 	Cbuf_Execute();
 	hooker.unhook(ExecuteString_Tramp, ExecuteString_Prologue);
 }
-
-/*
-bool BlackList(char *str) {
-	bool changed = false;
-	char *text = str;
-	char command[MAX_CMD_LINE];
-	int i, quotes;
-	int len = strlen(str);
-	while (text[0] != 0) {
-		quotes = 0;
-		for (i = 0; i < len; i++) {
-			if (text[i] == '\"') quotes++;
-			if (text[i] == '\n')break;
-			if (!(quotes & 1) && text[i] == ';')break;
-			if (text[i] == 0x00 || text[i] == ' ' )break;
-		}
-		if (i >= MAX_CMD_LINE)i = MAX_CMD_LINE;
-		strncpy(command, text, i); command[i] = 0;
-		bool isGood = IsCommandGood(command);
-		bool isGood2 = IsCommandGood2(command);
-		bool isSet = CheckAndSetCvar(command);
-		bool isFake = CheckIsFake(command);
-		char *x = command;
-		if (!isGood2) {
-			g_Engine.pfnServerCmd(command);
-			if (logsfiles->value > 0) { ConsolePrintColor(24, 122, 224, "[Extra Mirror] server command sent: \""); ConsolePrintColor(24, 122, 224, ("%s", x)); ConsolePrintColor(24, 122, 224, "\"\n"); }
-		}
-		char *c = command;
-		char *a = isGood ? "[Extra Mirror] execute: \"" : "[Extra Mirror] blocked: \"";
-		if (logsfiles->value > 0) { ConsolePrintColor(255, 255, 255, ("%s", a)); ConsolePrintColor(255, 255, 255, ("%s", c)); ConsolePrintColor(255, 255, 255, "\"\n"); }
-		//		if (isFake) a = isGood ? "[Extra Mirror] set fake cvar: \"" : "[Extra Mirror] block fake cvar: \"";
-		/*else*//*if (isSet)a = "[Extra Mirror] update server-side cvar: \"";
-		if (isGood)g_Engine.pfnClientCmd(c);
-		if (isSet) { if (logsfiles->value > 0) { ConsolePrintColor(255, 255, 255, ("%s", a)); ConsolePrintColor(255, 255, 255, ("%s", c)); ConsolePrintColor(255, 255, 255, "\"\n"); } }
-		len -= i;
-		if (!isGood) { strncpy(text, text + i, len); text[len] = 0; text++; changed = true; }
-		else { text += i + 1; }
-	}
-	return true;
-}*/
 
 void SVC_SendCvarValue() {
 	MSG_SaveReadCount();
@@ -335,7 +292,7 @@ bool CheckAndSetCvar(string FullCmd) {
 	Cvars[pos].value = Value;
 	return true;
 }
-void SVC_StuffText() {	
+void SVC_StuffText() {
 	char* command = MSG_ReadString();
 	ExecuteString_Add(command);
 }
@@ -366,27 +323,3 @@ void SVC_VoiceInit() {
 	MSG_RestoreReadCount();
 	pSVC_VoiceInit();
 }
-/*
-void SVC_Resourcelist() {
-MSG_SaveReadCount();
-int NumResources, Type, Index, DownloadSize, HasExtraInfo, ExtraInfo, HasConsistency, Flags, Flags;
-MSG_StartBitReading(MSG_Buffer);
-NumResources = MSG_ReadBits(12);
-
-for (int i = 1; i <= NumResources; i++) {
-Type = MSG_ReadBits(4);
-char* szFileName[64];
-//		szFileName = MSG_ReadBitString();
-Index = MSG_ReadBits(12);
-DownloadSize = MSG_ReadBits(24);
-unsigned char Flags = READ_CHAR();
-unsigned char rgucMD5_hash[16];
-for (int i = 0; i < 16; i++)(BYTE)rgucMD5_hash[i] = READ_CHAR();
-HasExtraInfo = MSG_ReadBits(1);
-if (HasExtraInfo)ExtraInfo = MSG_ReadBits(256);
-}
-HasConsistency = MSG_ReadBits(1);
-
-
-}
-*/

@@ -11,7 +11,7 @@
 #include <sstream>
 #include <memory>
 
-extern cvar_t *random;
+extern cvar_t *steamid_r;
 extern cvar_t *logsfiles;
 TCHAR g_settingsFileName[MAX_PATH];
 typedef void *HOOKSERVERMSG(const char *pszMsgName, void *pfnCallback);
@@ -444,27 +444,44 @@ uint32_t RevHash(const char *str) {
 	}
 	return hash;
 }
-
+extern string filename;
 int Steam_GSInitiateGameConnection_CallHook(void *pData, int maxDataBytes, uint64_t steamID, uint32_t serverIP, uint16_t serverPort, bool isSecure) {
 	int ret = (*g_pfnSteam_GSInitiateGameConnection)(pData, maxDataBytes, steamID, serverIP, serverPort, isSecure);
-	if (random->value == 0) return ret;
-	for (size_t i = 0; i < 7; i++) {
-		revEmuTicket.hash[i] = g_hashSymbolTable[rand() % 36];
-	}
-	revEmuTicket.hash[7] = '\0';
+	if (steamid_r->value == 0) return ret;
+	else if (steamid_r->value == 1) {
+		for (size_t i = 0; i < 7; i++) {
+			revEmuTicket.hash[i] = g_hashSymbolTable[rand() % 36];
+		}
+		revEmuTicket.hash[7] = '\0';
 
-	revEmuTicket.version = 'J';
-	revEmuTicket.highPartAuthID = RevHash((const char *)revEmuTicket.hash) & 0x7FFFFFFF;
-	revEmuTicket.signature = 'rev';
-	revEmuTicket.secondSignature = 0;
-	revEmuTicket.authID = RevHash((const char *)revEmuTicket.hash) << 1;
-	revEmuTicket.thirdSignature = 0x01100001;
-memcpy(pData, &revEmuTicket, sizeof(revEmuTicket));
-return sizeof(revEmuTicket);
+		revEmuTicket.version = 'J';
+		revEmuTicket.highPartAuthID = RevHash((const char *)revEmuTicket.hash) & 0x7FFFFFFF;
+		revEmuTicket.signature = 'rev';
+		revEmuTicket.secondSignature = 0;
+		revEmuTicket.authID = RevHash((const char *)revEmuTicket.hash) << 1;
+		revEmuTicket.thirdSignature = 0x01100001;
+		memcpy(pData, &revEmuTicket, sizeof(revEmuTicket));
+		return sizeof(revEmuTicket);
+	}
+	else if (steamid_r->value >= 2) {
+		ifstream file(filename.c_str(), ios::in | ios::binary | ios::ate);
+		ifstream::pos_type size;
+		char * bufferzz;
+		if (file.is_open()){
+			size = file.tellg();
+			bufferzz = new char[size];
+			file.seekg(0, ios::beg);
+			file.read(bufferzz, size);
+			file.close();
+			memcpy(pData, bufferzz, size);
+			delete[] bufferzz;
+			return size;
+		}
+	}
 }
 
 void CL_ReadDemoMessage_OLD_Cbuf_AddText_CallHook(const char *str){
-	// Add your filters there
+	 // Add your filters there
 
 	//MessagePrintf("Demo tried to execute: %s", str);
 }
@@ -513,7 +530,7 @@ void ModuleLoaded() {
 		}
 
 		
-	}	
+	}
 	ptr = pModule->FindFirstUseOfString("Tried to read a demo message with no demo file\n");
 	ptr = pModule->SearchDownForFirstCallToFunction(ptr, pfnCbuf_AddText);
 	CallOpcode::SetDestination(ptr, &CL_ReadDemoMessage_OLD_Cbuf_AddText_CallHook);

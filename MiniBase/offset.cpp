@@ -243,7 +243,7 @@ DWORD cOffset::FindEventMsgBase()
 {
 	DWORD PatternAddress = FindPattern(OFF_EVENT_MSG_BASE, HwBase, HwEnd, 0);
 	DWORD ReferenAddress;
-	if (equali(BuildInfo.GameVersion,"1.1.2.6")){
+	if (BuildInfo.Build<6027){
 		ReferenAddress = FindReference(HwBase, HwEnd, PatternAddress) - 0x06;
 	}
 	else { ReferenAddress = FindReference(HwBase, HwEnd, PatternAddress) - 0x07; }

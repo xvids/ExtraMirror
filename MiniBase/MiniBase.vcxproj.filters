@@ -26,9 +26,6 @@
     <ClCompile Include="utils.cpp">
       <Filter>Файлы исходного кода</Filter>
     </ClCompile>
-    <ClCompile Include="font.cpp">
-      <Filter>Файлы исходного кода</Filter>
-    </ClCompile>
     <ClCompile Include="ValveSDK\misc\parsemsg.cpp">
       <Filter>Заголовочные файлы\msg</Filter>
     </ClCompile>
@@ -56,9 +53,6 @@
       <Filter>Заголовочные файлы</Filter>
     </ClInclude>
     <ClInclude Include="struct.h">
-      <Filter>Заголовочные файлы</Filter>
-    </ClInclude>
-    <ClInclude Include="font.h">
       <Filter>Заголовочные файлы</Filter>
     </ClInclude>
     <ClInclude Include="ValveSDK\misc\parsemsg.h">
